@@ -813,6 +813,8 @@ namespace TS_SE_Tool
                 dc = new DataColumn("saveName", typeof(string));
                 combDT.Columns.Add(dc);
 
+                int quickIndex = 0;
+                int index = 0;
                 bool NotANumber = false;
 
                 foreach (string profile in Globals.SavesHex)
@@ -842,10 +844,15 @@ namespace TS_SE_Tool
                         }
 
                         combDT.Rows.Add(profile, "- " + ProfileName + " -");
+                        if (ProfileName == "Quicksave")
+                        {
+                            quickIndex = index;
+                        }
                     }
                     else
                         combDT.Rows.Add(profile, GetCustomSaveFilename(profile));
 
+                    index += 1;
                     NotANumber = false;
                 }
 
@@ -857,7 +864,7 @@ namespace TS_SE_Tool
                 if (comboBoxSaves.Items.Count > 0)
                 {
                     comboBoxSaves.Enabled = true;
-                    //comboBoxSaves.SelectedIndex = 0;
+                    comboBoxSaves.SelectedIndex = quickIndex;
 
                     buttonProfilesAndSavesOpenSaveFolder.Enabled = true;
                     buttonMainDecryptSave.Enabled = true;

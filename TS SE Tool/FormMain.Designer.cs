@@ -276,6 +276,7 @@
             // 
             // toolStripMenuItemProgramSettings
             // 
+            this.toolStripMenuItemProgramSettings.Enabled = false;
             this.toolStripMenuItemProgramSettings.Name = "toolStripMenuItemProgramSettings";
             this.toolStripMenuItemProgramSettings.Size = new System.Drawing.Size(164, 22);
             this.toolStripMenuItemProgramSettings.Text = "Program settings";
@@ -302,6 +303,7 @@
             // 
             // toolStripMenuItemLanguage
             // 
+            this.toolStripMenuItemLanguage.Enabled = false;
             this.toolStripMenuItemLanguage.Name = "toolStripMenuItemLanguage";
             this.toolStripMenuItemLanguage.Size = new System.Drawing.Size(71, 20);
             this.toolStripMenuItemLanguage.Text = "Language";
@@ -314,6 +316,7 @@
             this.toolStripMenuItemTutorial,
             this.toolStripSeparator4,
             this.toolStripMenuItemDownload});
+            this.toolStripMenuItemHelp.Enabled = false;
             this.toolStripMenuItemHelp.Name = "toolStripMenuItemHelp";
             this.toolStripMenuItemHelp.Size = new System.Drawing.Size(44, 20);
             this.toolStripMenuItemHelp.Text = "Help";
@@ -1174,13 +1177,14 @@
             // buttonShareTruckTruckDetailsCopy
             // 
             this.buttonShareTruckTruckDetailsCopy.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.buttonShareTruckTruckDetailsCopy.Enabled = false;
+            this.buttonShareTruckTruckDetailsCopy.Enabled = true;
             this.buttonShareTruckTruckDetailsCopy.Location = new System.Drawing.Point(186, 3);
             this.buttonShareTruckTruckDetailsCopy.Name = "buttonShareTruckTruckDetailsCopy";
             this.buttonShareTruckTruckDetailsCopy.Size = new System.Drawing.Size(178, 36);
             this.buttonShareTruckTruckDetailsCopy.TabIndex = 2;
-            this.buttonShareTruckTruckDetailsCopy.Text = "Copy Truck Datails";
+            this.buttonShareTruckTruckDetailsCopy.Text = "Capricorns Painting";
             this.buttonShareTruckTruckDetailsCopy.UseVisualStyleBackColor = true;
+            this.buttonShareTruckTruckDetailsCopy.Click += new System.EventHandler(this.buttonTruckCapricornsPaste_Click);
             // 
             // groupBoxUserTruckTruckDetails
             // 
@@ -1329,13 +1333,14 @@
             // buttonShareTrailerTrailerDetailsCopy
             // 
             this.buttonShareTrailerTrailerDetailsCopy.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.buttonShareTrailerTrailerDetailsCopy.Enabled = false;
+            this.buttonShareTrailerTrailerDetailsCopy.Enabled = true;
             this.buttonShareTrailerTrailerDetailsCopy.Location = new System.Drawing.Point(186, 3);
             this.buttonShareTrailerTrailerDetailsCopy.Name = "buttonShareTrailerTrailerDetailsCopy";
             this.buttonShareTrailerTrailerDetailsCopy.Size = new System.Drawing.Size(178, 36);
             this.buttonShareTrailerTrailerDetailsCopy.TabIndex = 2;
-            this.buttonShareTrailerTrailerDetailsCopy.Text = "Copy Truck Datails";
+            this.buttonShareTrailerTrailerDetailsCopy.Text = "Capricorns Painting";
             this.buttonShareTrailerTrailerDetailsCopy.UseVisualStyleBackColor = true;
+            this.buttonShareTrailerTrailerDetailsCopy.Click += new System.EventHandler(this.buttonTrailersCapricornsPaint_Click);
             // 
             // groupBoxUserTruckTrailer
             // 

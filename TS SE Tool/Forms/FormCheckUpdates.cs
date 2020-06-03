@@ -203,7 +203,7 @@ namespace TS_SE_Tool
 
         private void Check()
         {
-            string newversionData = GetLatestVersionData("https://liptoh.now.im/TS-SET-CheckVersion");
+            string newversionData = GetLatestVersionData("https://wildfire89.ct8.pl/capricorns/version.php");
 
             if (newversionData != null)
             {
@@ -260,7 +260,7 @@ namespace TS_SE_Tool
             labelStatus.Text = "Downloading...";
 
             Task t = Task.Run(() => {
-                var url = "https://liptoh.now.im/TS-SET-Download";
+                var url = "https://wildfire89.ct8.pl/capricorns/update.php";
                 var filename = Directory.GetCurrentDirectory() + @"\updater\ts.set.newversion.zip";
 
                 try

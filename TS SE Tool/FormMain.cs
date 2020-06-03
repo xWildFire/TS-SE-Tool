@@ -244,7 +244,7 @@ namespace TS_SE_Tool
             if (AddedJobsDictionary != null && AddedJobsDictionary.Count > 0)
                 exitDR = MessageBox.Show("You have unsaved changes. Do you realy want to close down application?", "Close Application without saving changes", MessageBoxButtons.YesNo);
             else
-                exitDR = MessageBox.Show("Do you realy want to close down application?", "Close Application", MessageBoxButtons.YesNo);
+                exitDR = DialogResult.Yes;
 
             if (exitDR == DialogResult.Yes)
             {

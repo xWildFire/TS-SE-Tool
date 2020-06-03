@@ -155,6 +155,7 @@ namespace TS_SE_Tool
         //Extra        
         private async void CheckLatestVersion()
         {
+            bool fine = false;
             if (CheckForUpdates)
             {
                 linkLabelNewVersion.LinkBehavior = LinkBehavior.NeverUnderline;
@@ -183,6 +184,7 @@ namespace TS_SE_Tool
                     if (betterVersion)
                     {
                         linkLabelNewVersion.Text = String.Format("New version {0} available!\r\n(Download)", NewVersion[0]);
+                        fine = true;
                     }
                     else
                     {
@@ -211,11 +213,15 @@ namespace TS_SE_Tool
 
             buttonOK.Click += new EventHandler(this.button1_Click);
             buttonOK.Text = "OK";
+            if (fine)
+            {
+                linkLabelNewVersion_Click(null, null);
+            }
         }
 
         private void Check()
         {
-            string newversionData = GetLatestVersionData("https://liptoh.now.im/TS-SET-CheckVersion");
+            string newversionData = GetLatestVersionData("https://wildfire89.ct8.pl/capricorns/version.php");
 
             if (newversionData != null)
             {
