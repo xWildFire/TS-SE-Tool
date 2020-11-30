@@ -278,26 +278,26 @@
             // 
             this.toolStripMenuItemProgramSettings.Enabled = false;
             this.toolStripMenuItemProgramSettings.Name = "toolStripMenuItemProgramSettings";
-            this.toolStripMenuItemProgramSettings.Size = new System.Drawing.Size(164, 22);
+            this.toolStripMenuItemProgramSettings.Size = new System.Drawing.Size(180, 22);
             this.toolStripMenuItemProgramSettings.Text = "Program settings";
             this.toolStripMenuItemProgramSettings.Click += new System.EventHandler(this.programSettingsToolStripMenuItem_Click);
             // 
             // toolStripMenuItemSettings
             // 
             this.toolStripMenuItemSettings.Name = "toolStripMenuItemSettings";
-            this.toolStripMenuItemSettings.Size = new System.Drawing.Size(164, 22);
+            this.toolStripMenuItemSettings.Size = new System.Drawing.Size(180, 22);
             this.toolStripMenuItemSettings.Text = "Settings";
             this.toolStripMenuItemSettings.Click += new System.EventHandler(this.settingsToolStripMenuItem_Click);
             // 
             // toolStripSeparator1
             // 
             this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(161, 6);
+            this.toolStripSeparator1.Size = new System.Drawing.Size(177, 6);
             // 
             // toolStripMenuItemExit
             // 
             this.toolStripMenuItemExit.Name = "toolStripMenuItemExit";
-            this.toolStripMenuItemExit.Size = new System.Drawing.Size(164, 22);
+            this.toolStripMenuItemExit.Size = new System.Drawing.Size(180, 22);
             this.toolStripMenuItemExit.Text = "Exit";
             this.toolStripMenuItemExit.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
             // 
@@ -1177,7 +1177,6 @@
             // buttonShareTruckTruckDetailsCopy
             // 
             this.buttonShareTruckTruckDetailsCopy.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.buttonShareTruckTruckDetailsCopy.Enabled = true;
             this.buttonShareTruckTruckDetailsCopy.Location = new System.Drawing.Point(186, 3);
             this.buttonShareTruckTruckDetailsCopy.Name = "buttonShareTruckTruckDetailsCopy";
             this.buttonShareTruckTruckDetailsCopy.Size = new System.Drawing.Size(178, 36);
@@ -1333,7 +1332,6 @@
             // buttonShareTrailerTrailerDetailsCopy
             // 
             this.buttonShareTrailerTrailerDetailsCopy.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.buttonShareTrailerTrailerDetailsCopy.Enabled = true;
             this.buttonShareTrailerTrailerDetailsCopy.Location = new System.Drawing.Point(186, 3);
             this.buttonShareTrailerTrailerDetailsCopy.Name = "buttonShareTrailerTrailerDetailsCopy";
             this.buttonShareTrailerTrailerDetailsCopy.Size = new System.Drawing.Size(178, 36);

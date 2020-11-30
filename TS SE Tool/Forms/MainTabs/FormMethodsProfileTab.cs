@@ -199,6 +199,7 @@ namespace TS_SE_Tool
                 }
                 else
                 {
+                    btn = new Button();
                     btn.Name = "buttonUC" + i.ToString();
                     btn.Text = null;
                     btn.Location = new Point(6 + (padding + width) * (i), 19);

@@ -25,8 +25,7 @@ namespace TS_SET_Updater
         public FormMain(string[] args)
         {
             InitializeComponent();
-
-            if(args.Length > 0)
+            if (args.Length > 0)
             {
                 updateStatus = bool.Parse(args[0]);
                 FileHashold = args[1];

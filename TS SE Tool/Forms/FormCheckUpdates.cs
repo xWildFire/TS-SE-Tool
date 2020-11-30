@@ -58,6 +58,7 @@ namespace TS_SE_Tool
                 buttonDownload.Click += new EventHandler(this.buttonDownload_Click);
 
                 this.Size = new Size(300, 180);
+                buttonDownload.PerformClick();
             }
         }
         //Buttons
@@ -137,7 +138,9 @@ namespace TS_SE_Tool
                 Process.Start(Directory.GetCurrentDirectory() + @"\updater.exe", "true " + NewVersion[1] + " " + Process.GetCurrentProcess().Id.ToString());
                 labelStatus.Text = "You can now finish your work.\r\nUpdate will start on exit.";
 
+                Thread.Sleep(1000);
                 Application.Exit();
+                Thread.Sleep(1000);
             }
             else
             {
