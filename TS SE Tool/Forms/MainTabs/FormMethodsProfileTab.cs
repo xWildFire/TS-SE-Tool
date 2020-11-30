@@ -25,9 +25,7 @@ namespace TS_SE_Tool
         private void CreateProfilePanelControls()
         {
             int pSkillsNameHeight = 64, pSkillsNameWidth = 64, pSkillsNameOffset = 5, pSkillsNamelOffset = 12;
-
-            string[] toolskillimgtooltip = new string[] { "ADR", "Long Distance", "High Value Cargo", "Fragile Cargo", "Just-In-Time Delivery", "Ecodriving" };
-
+            
             for (int i = 0; i < 6; i++)
             {
                 Panel Ppanel = new Panel();
@@ -38,21 +36,19 @@ namespace TS_SE_Tool
                 Ppanel.BorderStyle = BorderStyle.None;
                 Ppanel.Size = new Size(pSkillsNameWidth, pSkillsNameHeight);
                 Ppanel.Name = "profileSkillsPanel" + i.ToString();
-                toolTipMain.SetToolTip(Ppanel, toolskillimgtooltip[i]);
 
                 Bitmap bgimg = new Bitmap(SkillImgS[i], pSkillsNameHeight, pSkillsNameWidth);
                 Ppanel.BackgroundImage = bgimg;
 
                 Label slabel = new Label();
                 groupBoxProfileSkill.Controls.Add(slabel);
-                slabel.Name = "labelProfileSkill" + i.ToString() + "Name";
+                slabel.Name = "labelProfileSkill" + i.ToString();
                 slabel.Location = new Point(pSkillsNamelOffset * 2 + pSkillsNameWidth, 17 + (pSkillsNameHeight + pSkillsNameOffset) * i);
-                slabel.Text = toolskillimgtooltip[i];
                 slabel.AutoSize = true;
             }
 
             int bADRHeight = 48, bADRWidth = 48, pOffset = 6, lOffset = pSkillsNameWidth + pSkillsNamelOffset * 2;
-
+            
             for (int i = 0; i < 6; i++)
             {
                 CheckBox Ppanel = new CheckBox();
@@ -68,7 +64,6 @@ namespace TS_SE_Tool
                 Ppanel.Checked = false;
                 Ppanel.Padding = new Padding(0, 0, 1, 2);
                 Ppanel.BackgroundImageLayout = ImageLayout.Stretch;
-
 
                 Ppanel.BackgroundImage = SkillImgSBG[0];
                 Ppanel.Image = ADRImgSGrey[i];
@@ -103,7 +98,7 @@ namespace TS_SE_Tool
 
                     Ppanel.BackgroundImage = SkillImgSBG[0];
                     Ppanel.FlatAppearance.BorderSize = 0;
-
+                    
                     Ppanel.MouseEnter += new EventHandler(Skillbutton_MouseEnter);
                     Ppanel.MouseLeave += new EventHandler(Skillbutton_MouseLeave);
                     Ppanel.Click += new EventHandler(Skillbutton_Click);
@@ -112,15 +107,13 @@ namespace TS_SE_Tool
                     SkillButtonArray[i, j] = Ppanel;
                 }
             }
-
-            CreateUserColorsButtons();
         }
 
         private void FillFormProfileControls()
         {
             FormUpdatePlayerLevel();
 
-            char[] ADR = Convert.ToString(PlayerDataV.PlayerSkills[0], 2).PadLeft(6, '0').ToCharArray();
+            char[] ADR = Convert.ToString(PlayerDataData.PlayerSkills[0], 2).PadLeft(6, '0').ToCharArray();
 
             for (int i = 0; i < ADR.Length; i++)
             {
@@ -130,18 +123,23 @@ namespace TS_SE_Tool
 
             for (int i = 0; i < 5; i++)
             {
-                for (int j = 0; j < PlayerDataV.PlayerSkills[i + 1]; j++)
+                for (int j = 0; j < PlayerDataData.PlayerSkills[i + 1]; j++)
                 {
                     SkillButtonArray[i, j].Checked = true;
                 }
             }
+
+            panelProfileUserColors.VerticalScroll.Value = 0;
+            panelProfileUserColors.AutoScrollPosition = new Point(0, 0);
+
+            CreateUserColorsButtons();
 
             UpdateUserColorsButtons();
         }
 
         private void FormUpdatePlayerLevel()
         {
-            int playerlvl = PlayerDataV.getPlayerLvl()[0];
+            int playerlvl = PlayerDataData.getPlayerLvl()[0];
             labelPlayerLevelNumber.Text = playerlvl.ToString();
 
             for (int i = PlayerLevelNames.Count - 1; i >= 0; i--)
@@ -152,28 +150,103 @@ namespace TS_SE_Tool
                     break;
                 }
 
-            labelPlayerExperience.Text = PlayerDataV.ExperiencePoints.ToString();
-            labelExperienceNxtLvlThreshhold.Text = "/   " + PlayerDataV.getPlayerLvl()[1].ToString();
+            labelPlayerExperience.Text = PlayerDataData.ExperiencePoints.ToString();
+            labelExperienceNxtLvlThreshhold.Text = "/   " + PlayerDataData.getPlayerLvl()[1].ToString();
         }
 
         private void CreateUserColorsButtons()
         {
-            int padding = 6, width = 72, height = 48, colorcount = 8;
+            int padding = 3, width = 24, height = 24, spacing = 4;
             int usableSpace = groupBoxProfileUserColors.Bounds.Width;
-
-            for (int i = 0; i < colorcount; i++)
+                        
+            if (MainSaveFileInfoData.Version >= 49)
             {
-                Button rb = new Button();
-                rb.Name = "buttonUC" + i.ToString();
-                rb.Text = null;
-                rb.Location = new Point((usableSpace - width) / 2, 32 + (padding + height) * i);
-                rb.Size = new Size(width, height);
-                rb.FlatStyle = FlatStyle.Flat;
-                rb.Enabled = false;
+                int ucc = UserColorsList.Count / 4;
+                int btnNumber = 0;
 
-                rb.Click += new EventHandler(SelectColor);
+                for (int i = 0; i < ucc; i++)
+                {
+                    for (int j = 0; j < 4; j++)
+                    {
+                        Button rb = new Button();
+                        rb.Name = "buttonUC" + btnNumber.ToString();
+                        rb.Text = null;
 
-                groupBoxProfileUserColors.Controls.Add(rb);
+                        int x = padding + j * width + spacing * j;
+                        int y = (spacing + height) * (i);
+
+                        rb.Location = new Point(padding + j * width + spacing * j, (spacing + height) * i);
+                        rb.Size = new Size(width, height);
+                        rb.FlatStyle = FlatStyle.Flat;
+                        rb.Enabled = false;
+
+                        rb.Click += new EventHandler(SelectColor);
+
+                        panelProfileUserColors.Controls.Add(rb);
+                        btnNumber++;
+                    }
+                }
+
+                tableLayoutPanelUserColors.RowStyles[1].Height = 50;
+
+                if (ucc >= 40)
+                    buttonAddUserColor.Enabled = false;
+                else
+                    buttonAddUserColor.Enabled = true;
+
+                panelProfileUserColors.VerticalScroll.Maximum = 1500; //Virtual height
+                panelProfileUserColors.MouseWheel += new MouseEventHandler(this.panelProfileUserColors_MouseWheel);
+            }
+            else
+                for (int i = 0; i < UserColorsList.Count; i++)
+                {
+                    Button rb = new Button();
+                    rb.Name = "buttonUC" + i.ToString();
+                    rb.Text = null;
+                    rb.Location = new Point((usableSpace - width * 3) / 2, 8 + (padding * 2 + height * 2) * i);
+                    rb.Size = new Size(width * 3, height * 2);
+                    rb.FlatStyle = FlatStyle.Flat;
+                    rb.Enabled = false;
+
+                    rb.Click += new EventHandler(SelectColor);
+
+                    panelProfileUserColors.Controls.Add(rb);
+                }
+        }
+
+        private void panelProfileUserColors_MouseWheel(object sender, MouseEventArgs e)
+        {
+            if (e.Delta != 0)
+            {
+                int scroll = 28;
+                int location = Math.Abs(panelProfileUserColors.AutoScrollPosition.Y);
+
+                if (e.Delta < 0)
+                {
+                    if (location + scroll < panelProfileUserColors.VerticalScroll.Maximum)
+                    {
+                        location += scroll;
+                        panelProfileUserColors.VerticalScroll.Value = location;
+                    }
+                    else
+                    {
+                        location = panelProfileUserColors.VerticalScroll.Maximum;
+                        panelProfileUserColors.AutoScrollPosition = new Point(0, location);
+                    }
+                }
+                else
+                {
+                    if (location - scroll > 0)
+                    {
+                        location -= scroll;
+                        panelProfileUserColors.VerticalScroll.Value = location;
+                    }
+                    else
+                    {
+                        location = 0;
+                        panelProfileUserColors.AutoScrollPosition = new Point(0, location);
+                    }
+                }
             }
         }
 
@@ -186,52 +259,148 @@ namespace TS_SE_Tool
 
         private void UpdateUserColorsButtons()
         {
-            int padding = 6, width = 23;
-
-            for (int i = 0; i < UserColorsList.Count; i++)
+            if (MainSaveFileInfoData.Version >= 49)
             {
-                Button btn = null;
-                string btnname = "buttonUC" + i.ToString();
+                int padding = 3, width = 24, height = 24, spacing = 4;
 
-                if (groupBoxProfileUserColors.Controls.ContainsKey(btnname))
-                {
-                    btn = groupBoxProfileUserColors.Controls[btnname] as Button;
-                }
-                else
-                {
-                    btn = new Button();
-                    btn.Name = "buttonUC" + i.ToString();
-                    btn.Text = null;
-                    btn.Location = new Point(6 + (padding + width) * (i), 19);
-                    btn.Size = new Size(width, 23);
-                    btn.FlatStyle = FlatStyle.Flat;
-                    btn.Enabled = false;
-                    btn.Click += new EventHandler(SelectColor);
+                panelProfileUserColors.VerticalScroll.Maximum = (height + spacing) * UserColorsList.Count / 4;
 
-                    groupBoxProfileUserColors.Controls.Add(btn);
-                }
-
-                if (btn != null)
+                for (int i = 0; i < UserColorsList.Count; i++)
                 {
-                    btn.Enabled = true;
-                    if (UserColorsList[i].A == 0)
+                    Button btn = null;
+                    string btnname = "buttonUC" + i.ToString();
+
+                    if (panelProfileUserColors.Controls.ContainsKey(btnname))
                     {
-                        btn.Text = "X";
-                        btn.BackColor = Color.FromName("Control");
+                        btn = panelProfileUserColors.Controls[btnname] as Button;
+
+                        btn.Enabled = true;
+
+                        if (UserColorsList[i].A == 0)
+                        {
+                            btn.Text = "X";
+                            btn.BackColor = Color.FromName("Control");
+                        }
+                        else
+                        {
+                            btn.Text = "";
+                            btn.BackColor = UserColorsList[i];
+                        }
                     }
                     else
                     {
-                        btn.Text = "";
-                        btn.BackColor = UserColorsList[i];
+                        for (int j = 0; j < 4; j++)
+                        {
+                            btn = new Button();
+                            btn.Name = "buttonUC" + i.ToString();
+                            btn.Text = null;
+
+                            int x = padding + j * width + spacing * j;
+                            int y = (spacing + height) * (i / 4);
+
+                            btn.Location = new Point(x, y);
+                            btn.Size = new Size(width, height);
+                            btn.FlatStyle = FlatStyle.Flat;
+                            btn.Enabled = false;
+
+                            btn.Click += new EventHandler(SelectColor);
+
+                            panelProfileUserColors.Controls.Add(btn);
+
+                            btn.Enabled = true;
+
+                            if (UserColorsList[i].A == 0)
+                            {
+                                btn.Text = "X";
+                                btn.BackColor = Color.FromName("Control");
+                            }
+                            else
+                            {
+                                btn.Text = "";
+                                btn.BackColor = UserColorsList[i];
+                            }
+                            i++;
+                        }
+                        i--;
+                    }
+                }                
+            }
+            else
+            {
+                int padding = 6, width = 23;
+
+                for (int i = 0; i < UserColorsList.Count; i++)
+                {
+                    Button btn = null;
+                    string btnname = "buttonUC" + i.ToString();
+
+                    if (panelProfileUserColors.Controls.ContainsKey(btnname))
+                    {
+                        btn = panelProfileUserColors.Controls[btnname] as Button;
+                    }
+                    else
+                    {
+                        btn.Name = "buttonUC" + i.ToString();
+                        btn.Text = null;
+                        btn.Location = new Point(6 + (padding + width) * (i), 19);
+                        btn.Size = new Size(width, 23);
+                        btn.FlatStyle = FlatStyle.Flat;
+                        btn.Enabled = false;
+                        btn.Click += new EventHandler(SelectColor);
+
+                        panelProfileUserColors.Controls.Add(btn);
+                    }
+
+                    if (btn != null)
+                    {
+                        btn.Enabled = true;
+                        if (UserColorsList[i].A == 0)
+                        {
+                            btn.Text = "X";
+                            btn.BackColor = Color.FromName("Control");
+                        }
+                        else
+                        {
+                            btn.Text = "";
+                            btn.BackColor = UserColorsList[i];
+                        }
                     }
                 }
             }
+        }
+
+        private void DeleteUserColorsButtons()
+        {
+            short counter = 0;
+            do
+            {
+                try
+                {
+                    Control[] tempArray = panelProfileUserColors.Controls.Find("buttonUC" + counter, false);
+
+                    if (tempArray.Length > 0)
+                    {
+                        panelProfileUserColors.Controls.Remove(tempArray[0]);
+                        counter++;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                catch
+                {
+                    break;
+                }
+
+            } while (true);
         }
 
         internal void SelectColor(object sender, EventArgs e)
         {
             Button obj = sender as Button;
             Color BC = obj.BackColor;
+
             if (obj.Text != "")
                 BC = Color.White;
 
@@ -240,7 +409,7 @@ namespace TS_SE_Tool
 
             if (frm.ShowDialog() == DialogResult.OK)
             {
-                int index = int.Parse(obj.Name.Substring(8, 1));
+                int index = int.Parse(obj.Name.Substring(8));
 
                 UserColorsList[index] = frm.PrimaryColor;
 
@@ -255,47 +424,155 @@ namespace TS_SE_Tool
                     obj.BackColor = Color.FromName("Control");
                 }
             }
+
+            if (MainSaveFileInfoData.Version >= 49)
+                RemoveUserColorUnused4slot();
+        }
+
+        private void buttonAddUserColor_Click(object sender, EventArgs e)
+        {
+            AddUserColor4slot();
+        }
+
+        internal void AddUserColor4slot()
+        {
+            Color userColor = Color.FromArgb(0, 0, 0, 0);
+
+            for (int i = 0; i < 4; i++)
+            {
+                UserColorsList.Add(userColor);
+            }
+
+            //Scroll panel to the top to properly add buttons
+            panelProfileUserColors.AutoScrollPosition = new Point(0, 0);
+
+            UpdateUserColorsButtons();
+
+
+            //Return to top position
+            int location = panelProfileUserColors.VerticalScroll.Maximum - panelProfileUserColors.Height;
+
+            if (location > 0)
+            {
+                panelProfileUserColors.AutoScrollPosition = new Point(0, location);
+                panelProfileUserColors.VerticalScroll.Value = location;
+            }
+        }
+
+        internal void RemoveUserColorUnused4slot()
+        {
+            int counter = UserColorsList.Count - 1;
+            int slotCount = UserColorsList.Count / 4;
+
+            try
+            {
+                for (int iCol = 0; iCol < slotCount; iCol++)
+                {
+                    bool delete = false;
+
+                    for (int i = 0; i < 4; i++)
+                    {
+                        if (UserColorsList[counter - i].A == 0)
+                        {
+                            delete = true;
+                        }
+                        else
+                        {
+                            delete = false;
+                            break;
+                        }
+                    }
+
+                    counter = counter - 4;
+
+                    if (delete)
+                    {
+                        for (int i = 4; i > 0; i--)
+                        {
+                            int btnNumber = counter + i;
+
+                            Control[] tempArray = panelProfileUserColors.Controls.Find("buttonUC" + btnNumber.ToString(), false);
+
+                            if (tempArray.Length > 0)
+                            {
+                                panelProfileUserColors.Controls.Remove(tempArray[0]);
+                                UserColorsList.RemoveAt(btnNumber);
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+
+                if (UserColorsList.Count / 4 >= 40)
+                    buttonAddUserColor.Enabled = false;
+                else
+                    buttonAddUserColor.Enabled = true;
+
+            }
+            catch
+            { }
+
+            //Scroll panel to the top to properly add buttons
+            panelProfileUserColors.AutoScrollPosition = new Point(0, 0);
+
+            UpdateUserColorsButtons();
+
+            //Return to top position
+            int location = panelProfileUserColors.VerticalScroll.Maximum - panelProfileUserColors.Height;
+
+            if (location > 0)
+            {
+                panelProfileUserColors.AutoScrollPosition = new Point(0, location);
+                panelProfileUserColors.VerticalScroll.Value = location;
+            }
         }
 
         //Profile buttons
         private void buttonPlayerLvlPlus01_Click(object sender, EventArgs e)
         {
-            PlayerDataV.getPlayerExp(int.Parse(labelPlayerLevelNumber.Text) + 1);
+            PlayerDataData.getPlayerExp(int.Parse(labelPlayerLevelNumber.Text) + 1);
 
             FormUpdatePlayerLevel();
         }
 
         private void buttonPlayerLvlPlus10_Click(object sender, EventArgs e)
         {
-            PlayerDataV.getPlayerExp(int.Parse(labelPlayerLevelNumber.Text) + 10);
+            PlayerDataData.getPlayerExp(int.Parse(labelPlayerLevelNumber.Text) + 10);
 
             FormUpdatePlayerLevel();
         }
 
         private void buttonPlayerLvlMax_Click(object sender, EventArgs e)
         {
-            PlayerDataV.getPlayerExp(150);
+            PlayerDataData.getPlayerExp(150);
 
             FormUpdatePlayerLevel();
         }
 
         private void buttonPlayerLvlMinus01_Click(object sender, EventArgs e)
         {
-            PlayerDataV.getPlayerExp(int.Parse(labelPlayerLevelNumber.Text) - 1);
+            PlayerDataData.getPlayerExp(int.Parse(labelPlayerLevelNumber.Text) - 1);
 
             FormUpdatePlayerLevel();
         }
 
         private void buttonPlayerLvlMinus10_Click(object sender, EventArgs e)
         {
-            PlayerDataV.getPlayerExp(int.Parse(labelPlayerLevelNumber.Text) - 10);
+            PlayerDataData.getPlayerExp(int.Parse(labelPlayerLevelNumber.Text) - 10);
 
             FormUpdatePlayerLevel();
         }
 
         private void buttonPlayerLvlMin_Click(object sender, EventArgs e)
         {
-            PlayerDataV.getPlayerExp(0);
+            PlayerDataData.getPlayerExp(0);
 
             FormUpdatePlayerLevel();
         }
@@ -314,7 +591,7 @@ namespace TS_SE_Tool
                 {
                     SkillButtonArray[skillIndex, j].Checked = true;
                 }
-                PlayerDataV.PlayerSkills[++skillIndex] = ++buttonIndex;
+                PlayerDataData.PlayerSkills[++skillIndex] = ++buttonIndex;
             }
             else
             {
@@ -322,7 +599,7 @@ namespace TS_SE_Tool
                 {
                     SkillButtonArray[skillIndex, j].Checked = false;
                 }
-                PlayerDataV.PlayerSkills[++skillIndex] = buttonIndex;
+                PlayerDataData.PlayerSkills[++skillIndex] = buttonIndex;
             }
         }
 
@@ -395,18 +672,18 @@ namespace TS_SE_Tool
 
             if (thisbutton.Checked)
             {
-                char[] ADR = Convert.ToString(PlayerDataV.PlayerSkills[0], 2).PadLeft(6, '0').ToCharArray();
+                char[] ADR = Convert.ToString(PlayerDataData.PlayerSkills[0], 2).PadLeft(6, '0').ToCharArray();
                 ADR[byte.Parse(thisbutton.Name.Substring(9, 1))] = '1';
 
-                PlayerDataV.PlayerSkills[0] = Convert.ToByte(new string(ADR), 2);
+                PlayerDataData.PlayerSkills[0] = Convert.ToByte(new string(ADR), 2);
                 thisbutton.BackgroundImage = SkillImgSBG[1];
             }
             else
             {
-                char[] ADR = Convert.ToString(PlayerDataV.PlayerSkills[0], 2).PadLeft(6, '0').ToCharArray();
+                char[] ADR = Convert.ToString(PlayerDataData.PlayerSkills[0], 2).PadLeft(6, '0').ToCharArray();
                 ADR[byte.Parse(thisbutton.Name.Substring(9, 1))] = '0';
                 string temp = new string(ADR);
-                PlayerDataV.PlayerSkills[0] = Convert.ToByte(temp.PadLeft(8, '0'), 2);
+                PlayerDataData.PlayerSkills[0] = Convert.ToByte(temp.PadLeft(8, '0'), 2);
                 thisbutton.BackgroundImage = SkillImgSBG[1];
             }
         }

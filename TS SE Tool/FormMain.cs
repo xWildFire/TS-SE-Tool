@@ -37,7 +37,6 @@ namespace TS_SE_Tool
     {
         #region  Accesslevels
 
-        private int SavefileVersion; //+
         internal int[] SupportedSavefileVersionETS2; //Program
         internal string SupportedGameVersionETS2;//Program
         //internal int SupportedSavefileVersionATS;
@@ -105,7 +104,7 @@ namespace TS_SE_Tool
         private List<string> CountriesList;//Program
 
         private List<string> DBDependencies;//Program DB
-        private List<string> SFDependencies;//Program Info
+        //private List<string> SFDependencies;//Program Info
 
         public List<Garages> GaragesList; //+
         public List<string> extraVehicles;//process result
@@ -126,8 +125,9 @@ namespace TS_SE_Tool
 
         private DateTime LastModifiedTimestamp; //+
 
-        public PlayerData PlayerDataV; //+
-        public SaveFileProfileData SFProfileData;
+        public PlayerData PlayerDataData; //+
+        public SaveFileProfileData MainSaveFileProfileData;
+        internal SaveFileInfoData MainSaveFileInfoData;
 
         internal ProgSettings ProgSettingsV;//Program
 
@@ -160,7 +160,7 @@ namespace TS_SE_Tool
         private DataTable DistancesTable; //Program
 
         private Bitmap ProgressBarGradient; //Program
-        private Image RepairImg, RefuelImg, CutomizeImg, PlayerCompanyLogo; //Program
+        private Image RepairImg, RefuelImg, CustomizeImg, PlayerCompanyLogo; //Program
 
         private Image[] ADRImgS, ADRImgSGrey, SkillImgSBG, SkillImgS, GaragesImg, GaragesHQImg, CitiesImg, UrgencyImg, CargoTypeImg, CargoType2Img, 
             TruckPartsImg, TrailerPartsImg, GameIconeImg; //Program
@@ -183,46 +183,63 @@ namespace TS_SE_Tool
 
         public Dictionary<string, List<string>> CurrencyDictFormatATS = new Dictionary<string, List<string>>();
         public Dictionary<string, double> CurrencyDictConversionATS = new Dictionary<string, double>();
+
+        internal Dictionary<string, Dictionary<UInt16, SCS.SCSFontLetter>> GlobalFontMap;
+        internal Dictionary<string, byte> LicensePlateWidth;
         #endregion
 
         public FormMain()
         {
+            LogWriter("Initializing form...");
             InitializeComponent();
-
+            LogWriter("Form initialized.");
             //Non program task
+            LogWriter("Caching game data...");
             CacheGameData();
+            LogWriter("Caching finished.");
 
             //Program
             UpdateStatusBarMessage.OnNewStatusMessage += UpdateStatusBarMessage_OnNewStatusMessage;
             this.Icon = Properties.Resources.MainIco;
 
             SetDefaultValues(true);
+            LogWriter("Loading config...");
             LoadConfig();
+            LogWriter("Config loaded.");
 
+            LogWriter("Loading resources...");
             LoadExtCountries();
             LoadExtImages();
+            LogWriter("Resources loaded.");
             AddImagesToControls();
 
             //Create page controls
+            LogWriter("Creating form elements...");
             CreateProfilePanelControls();
             CreateProgressBarBitmap();
             CreateTruckPanelControls();
             CreateTrailerPanelControls();
+            LogWriter("Done.");
 
             //Clear elements
+            LogWriter("Prepare form...");
             ClearFormControls(true);
 
             ToggleControlsAccess(false);
-            
+            LogWriter("Done.");
+
             //Language
+            LogWriter("Loading translation...");
             GetTranslationFiles();
             ChangeLanguage();
+            LogWriter("Done.");
 
             DetectGame();
         }
 
         private void FormMain_Shown(object sender, EventArgs e)
         {
+            LogWriter("Opening form...");
             try
             {
                 if (Properties.Settings.Default.ShowSplashOnStartup || Properties.Settings.Default.CheckUpdatesOnStartup)
@@ -230,8 +247,11 @@ namespace TS_SE_Tool
                     FormSplash WindowSplash = new FormSplash();
                     WindowSplash.ShowDialog();
                 }
+                LogWriter("Done.");
             }
-            catch {
+            catch
+            {
+                LogWriter("Done. Settings error.");
                 FormSplash WindowSplash = new FormSplash();
                 WindowSplash.ShowDialog();
             }
@@ -242,7 +262,7 @@ namespace TS_SE_Tool
             DialogResult exitDR = DialogResult.Yes;
 
             if (AddedJobsDictionary != null && AddedJobsDictionary.Count > 0)
-                exitDR = MessageBox.Show("You have unsaved changes. Do you realy want to close down application?", "Close Application without saving changes", MessageBoxButtons.YesNo);
+                exitDR = MessageBox.Show("You have unsaved changes. Do you really want to close down application?", "Close Application without saving changes", MessageBoxButtons.YesNo);
             else
                 exitDR = DialogResult.Yes;
 

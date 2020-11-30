@@ -126,7 +126,6 @@ namespace TS_SE_Tool
 
                 ProgSettingsV.ProgramVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
-                SavefileVersion = 0;
                 SupportedSavefileVersionETS2 = new int[] { 39, 49 }; //Supported save version
                 SupportedGameVersionETS2 = "1.33.x - 1.38.x"; //Last game version Tested on
                 //SupportedSavefileVersionATS;
@@ -141,6 +140,8 @@ namespace TS_SE_Tool
                 dictionaryProfiles = new Dictionary<string, string> { { "ETS2", ProfileETS2 }, { "ATS", ProfileATS } };
                 GameType = "ETS2";
                 //Globals.CurrentGame = dictionaryProfiles[GameType];
+
+                LicensePlateWidth = new Dictionary<string, byte> { { "ETS2", 128 }, { "ATS", 64 } };
 
                 CompaniesLngDict = new Dictionary<string, string>();
                 CitiesLngDict = new Dictionary<string, string>();
@@ -337,8 +338,10 @@ namespace TS_SE_Tool
                 Globals.CurrencyName = ProgSettingsV.CurrencyMesATS;
             }
 
-            PlayerDataV = new PlayerData();
-            SFProfileData = new SaveFileProfileData();
+            PlayerDataData = new PlayerData();
+
+            MainSaveFileProfileData = new SaveFileProfileData();
+            MainSaveFileInfoData = new SaveFileInfoData();
 
             UserCompanyAssignedTruckPlacementEdited = false;
 
@@ -378,7 +381,7 @@ namespace TS_SE_Tool
             CompaniesListDiff = new List<string>();
 
             DBDependencies = new List<string>();
-            SFDependencies = new List<string>();
+            //SFDependencies = new List<string>();
 
             ExternalCompanies = new List<ExtCompany>();
 
@@ -414,7 +417,9 @@ namespace TS_SE_Tool
             DistancesTable.Clear();
 
             components = null;
-        }
+
+           GlobalFontMap = new Dictionary<string, Dictionary<UInt16, SCS.SCSFontLetter>>();
+    }
 
         private void AddImagesToControls()
         {
@@ -461,12 +466,10 @@ namespace TS_SE_Tool
                 //Searching for ETS2
                 Process[] ets2proc = Process.GetProcessesByName("eurotrucks2");
 
-                //Searching for ETS2
+                //Searching for ATS
                 Process[] atsproc = Process.GetProcessesByName("amtrucks");
 
-                if (ets2proc.Count() > 0)
-                    radioButtonMainGameSwitchETS.Checked = true;
-                else if (atsproc.Count() > 0)
+                if (atsproc.Count() > 0)
                     radioButtonMainGameSwitchATS.Checked = true;
                 else
                     radioButtonMainGameSwitchETS.Checked = true;
@@ -491,12 +494,8 @@ namespace TS_SE_Tool
                 temp.Checked = false;
 
             //User Colors
-            UserColorsList.Clear();
-            for (int i = 0; i < 8; i++)
-                UserColorsList.Add(Color.FromArgb(0, 0, 0, 0));
-
-            UpdateUserColorsButtons();
-            UserColorsList.Clear();
+            tableLayoutPanelUserColors.RowStyles[1].Height = 0; //Hide add slot
+            DeleteUserColorsButtons();
 
             //Company
             pictureBoxCompanyLogo.Image = null;
@@ -507,9 +506,12 @@ namespace TS_SE_Tool
 
             listBoxVisitedCities.Items.Clear();
             listBoxGarages.Items.Clear();
+
             //Truck
+            comboBoxUserTruckCompanyTrucks.DataSource = null;
 
             //Trailer
+            comboBoxUserTrailerCompanyTrailers.DataSource = null;
 
             //FreightMarket
             comboBoxFreightMarketCountries.DataSource = null;
@@ -552,18 +554,30 @@ namespace TS_SE_Tool
             {
                 try
                 {
-                    string translatedString = ResourceManagerMain.GetString(cntrl.Name.TrimEnd(charsToTrim), _ci);
+                    string translatedString = ResourceManagerMain.GetString(cntrl.Name, _ci);
+
+                    if (translatedString == null)
+                        translatedString = ResourceManagerMain.GetString(cntrl.Name.TrimEnd(charsToTrim), _ci);                    
+
                     if (translatedString != null)
                         cntrl.Text = translatedString;
 
                     if (_formTooltip != null)
                     {
-                        string TolltipString = ResourceManagerMain.GetString("tooltip" + cntrl.Name.TrimEnd(charsToTrim), _ci);
+                        string TolltipString = ResourceManagerMain.GetString("tooltip" + cntrl.Name, _ci);
+
+                        if (TolltipString == null)                        
+                            TolltipString = ResourceManagerMain.GetString("tooltip" + cntrl.Name.TrimEnd(charsToTrim), _ci);                        
+
                         if (TolltipString != null)
                         {
                             TolltipString = TolltipString.Replace("\\r\\n", Environment.NewLine);
-                            _formTooltip.SetToolTip(cntrl, TolltipString);
-                        }
+
+                            if (int.TryParse(cntrl.Name.Substring(cntrl.Name.Length - 1), out int number))
+                                number++;
+
+                            _formTooltip.SetToolTip(cntrl, String.Format(TolltipString, number));
+                        }   
                     }
                 }
                 catch
@@ -622,10 +636,14 @@ namespace TS_SE_Tool
         private void CorrectControlsPositions()
         {
             //Truck
-            Panel pbTruckFuel = (Panel)tabControlMain.TabPages[2].Controls.Find("progressbarTruckFuel",true)[0];
-            Label Flabel = (Label)tabControlMain.TabPages[2].Controls.Find("labelTruckDetailsFuel", true)[0];
+            Label labelPlate = (Label)tabControlMain.TabPages["tabPageTruck"].Controls.Find("labelUserTruckLicensePlate", true).FirstOrDefault();
+            if (labelPlate != null)
+                tableLayoutPanelTruckLP.ColumnStyles[0] = new ColumnStyle(SizeType.Absolute, labelPlate.PreferredSize.Width);
 
-            Flabel.Location = new Point(pbTruckFuel.Location.X + (pbTruckFuel.Width - Flabel.Width) / 2, pbTruckFuel.Location.Y + pbTruckFuel.Height + 10);
+            //Trailer
+            labelPlate = (Label)tabControlMain.TabPages["tabPageTrailer"].Controls.Find("labelUserTrailerLicensePlate", true).FirstOrDefault();
+            if (labelPlate != null)
+                tableLayoutPanelTrailerLP.ColumnStyles[0] = new ColumnStyle(SizeType.Absolute, labelPlate.PreferredSize.Width);
 
             //Freight Market
             labelFreightMarketDistanceNumbers.Location = new Point( labelFreightMarketDistance.Location.X + labelFreightMarketDistance.Width + 6, labelFreightMarketDistanceNumbers.Location.Y);
@@ -636,7 +654,76 @@ namespace TS_SE_Tool
             int savedindex = 0, j = 0;
             string savedvalue = "", ntFormat = " -nt";
             DataTable temptable = new DataTable();
-            
+
+            //Truck tab
+            temptable = comboBoxUserTruckCompanyTrucks.DataSource as DataTable;
+            if (temptable != null)
+            {
+                savedindex = comboBoxUserTruckCompanyTrucks.SelectedIndex;
+
+                if (savedindex != -1)
+                    savedvalue = comboBoxUserTruckCompanyTrucks.SelectedValue.ToString();
+
+                //comboBoxUserTruckCompanyTrucks.SelectedIndexChanged -= comboBoxCompanyTrucks_SelectedIndexChanged;
+
+                foreach (DataRow temp in temptable.Rows)
+                {
+                    string source = temp[0].ToString();
+
+                    string value = GaragesList.Find(x => x.Vehicles.Contains(source)).GarageNameTranslated;
+
+                    if (value != null && value != "")
+                    {
+                        temp["GarageName"] = value;
+                    }
+                    else
+                    {
+                        temp["GarageName"] = "-unknown-";
+                    }
+                }
+
+                if (savedindex != -1)
+                    comboBoxUserTruckCompanyTrucks.SelectedValue = savedvalue;
+
+                //comboBoxUserTruckCompanyTrucks.SelectedIndexChanged += comboBoxCompanyTrucks_SelectedIndexChanged;
+            }
+
+            //Trailer tab
+            temptable = comboBoxUserTrailerCompanyTrailers.DataSource as DataTable;
+            if (temptable != null)
+            {
+                savedindex = comboBoxUserTrailerCompanyTrailers.SelectedIndex;
+
+                if (savedindex != -1)
+                    savedvalue = comboBoxUserTrailerCompanyTrailers.SelectedValue.ToString();
+
+                //comboBoxUserTrailerCompanyTrailers.SelectedIndexChanged -= comboBoxCompanyTrailers_SelectedIndexChanged;
+
+                foreach (DataRow temp in temptable.Rows)
+                {
+                    string source = temp[0].ToString();
+                    if (source == "null")
+                        continue;
+
+                    string value = GaragesList.Find(x => x.Trailers.Contains(source))?.GarageNameTranslated ?? "";
+
+                    if (value != null && value != "")
+                    {
+                        temp["GarageName"] = value;
+                    }
+                    else
+                    {
+                        temp["GarageName"] = "";
+                    }
+                }
+
+                if (savedindex != -1)
+                    comboBoxUserTrailerCompanyTrailers.SelectedValue = savedvalue;
+
+                //comboBoxUserTrailerCompanyTrailers.SelectedIndexChanged += comboBoxCompanyTrailers_SelectedIndexChanged;
+            }
+
+
             //Countries ComboBoxes
             temptable = comboBoxFreightMarketCountries.DataSource as DataTable;
             if (temptable != null)
@@ -683,14 +770,18 @@ namespace TS_SE_Tool
                 //Shift Unsorted
                 try
                 {
-                    sourceRow = sortedDT.Select("Country = '+unsorted'")[0];
-                    rowi = sortedDT.Rows.IndexOf(sourceRow);
+                    DataRow[] tmpRows = sortedDT.Select("Country = '+unsorted'");
+                    if (tmpRows.Count() > 0)
+                    {
+                        sourceRow = tmpRows[0];
+                        rowi = sortedDT.Rows.IndexOf(sourceRow);
 
-                    row = sortedDT.NewRow();
-                    row.ItemArray = sourceRow.ItemArray;
+                        row = sortedDT.NewRow();
+                        row.ItemArray = sourceRow.ItemArray;
 
-                    sortedDT.Rows.RemoveAt(rowi);
-                    sortedDT.Rows.InsertAt(row, 1);
+                        sortedDT.Rows.RemoveAt(rowi);
+                        sortedDT.Rows.InsertAt(row, 1);
+                    }
                 }
                 catch { }
 

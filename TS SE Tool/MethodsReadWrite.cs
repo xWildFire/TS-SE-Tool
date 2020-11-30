@@ -383,7 +383,7 @@ namespace TS_SE_Tool
 
             ms = new MemoryStream();
             ImageFromDDS(@"img\customize_p.dds").Save(ms, ImageFormat.Png);
-            CutomizeImg = Image.FromStream(ms);
+            CustomizeImg = Image.FromStream(ms);
             ms.Dispose();
 
             imgpaths = new string[] { @"img\" + GameType + @"\adr_1.dds", @"img\" + GameType + @"\adr_2.dds", @"img\" + GameType + @"\adr_3.dds", @"img\" + GameType + @"\adr_4.dds", @"img\" + GameType + @"\adr_6.dds", @"img\" + GameType + @"\adr_8.dds" };
@@ -437,6 +437,35 @@ namespace TS_SE_Tool
 
             imgpaths = new string[] { @"img\ETS2\game_n.dds", @"img\ATS\game_n.dds" };
             GameIconeImg = ExtImgLoader(imgpaths, 32, 32, 0, 0);
+        }
+
+        public Image[] ExtImgLoader(string[] _filenamesarray)
+        {
+            Image[] tempImgarray = new Image[_filenamesarray.Length];
+
+            for (int i = 0; i < _filenamesarray.Length; i++)
+            {
+                try
+                {
+                    MemoryStream ms = new MemoryStream();
+
+                    if (File.Exists(_filenamesarray[i]))
+                    {
+                        Bitmap temp = ImageFromDDS(_filenamesarray[i]);
+                        temp.Save(ms, ImageFormat.Png);
+                        tempImgarray[i] = Image.FromStream(ms);
+                        ms.Dispose();
+                    }
+                    else
+                        tempImgarray[i] = null;
+                }
+                catch
+                {
+                    tempImgarray[i] = null;
+                }
+            }
+
+            return tempImgarray;
         }
 
         public Image[] ExtImgLoader(string[] _filenamesarray, int _width, int _height, int _x, int _y )
@@ -707,7 +736,7 @@ namespace TS_SE_Tool
             {
                 using (StreamWriter writer = new StreamWriter(Directory.GetCurrentDirectory() + @"\log.log", true))
                 {
-                    writer.WriteLine(DateTime.Now + ": " + _error);
+                    writer.WriteLine(DateTime.Now + " " + _error);
                 }
             }
             catch
@@ -813,7 +842,7 @@ namespace TS_SE_Tool
                 }
                 else if (tempProfileFileInMemory != null)
                 {
-                    SFProfileData.Prepare(tempProfileFileInMemory);
+                    MainSaveFileProfileData.Prepare(tempProfileFileInMemory);
                 }
             }
 
@@ -876,40 +905,13 @@ namespace TS_SE_Tool
 
             if (!InfoDepContinue)
             {
+                ToggleMainControlsAccess(true);
                 return;
             }
 
-            if (SavefileVersion > 0 && SavefileVersion > SupportedSavefileVersionETS2[0] && SavefileVersion > SupportedSavefileVersionETS2[1])
-            {
-                MessageBox.Show("Savefile version don't supported.\nYou cann't edit file with version " + SavefileVersion + ", but you can try to decode it.", "Wrong version");
-                UpdateStatusBarMessage.ShowStatusMessage(SMStatus.Clear);
+            //End Save Info
 
-                radioButtonMainGameSwitchETS.Enabled = true;
-                radioButtonMainGameSwitchATS.Enabled = true;
-
-                checkBoxProfilesAndSavesProfileBackups.Enabled = true;
-                buttonProfilesAndSavesRefreshAll.Enabled = true;
-                comboBoxPrevProfiles.Enabled = true;
-                comboBoxProfiles.Enabled = true;
-                comboBoxSaves.Enabled = true;
-
-                buttonMainDecryptSave.Enabled = true;
-                buttonMainLoadSave.Enabled = true;
-                buttonMainWriteSave.Enabled = false;
-                buttonMainWriteSave.Visible = false;
-
-                return;
-            }
-            else if (SavefileVersion == 0)
-            {
-                DialogResult result = MessageBox.Show("Savefile version was not recognised.\nDo you want to continue?", "Version not recognised", MessageBoxButtons.YesNo);
-                if (result == DialogResult.No)
-                {
-                    UpdateStatusBarMessage.ShowStatusMessage(SMStatus.Clear);
-                    return;
-                }
-            }
-
+            //Save file
             if (!File.Exists(SiiSavePath))
             {
                 LogWriter("File does not exist in " + SavefilePath);
@@ -987,7 +989,7 @@ namespace TS_SE_Tool
                     int decodeAttempt = 0;
                     while (decodeAttempt < 5)
                     {
-                        tempProfileFileInMemory = NewDecodeFile(SiiProfilePath);
+                        tempProfileFileInMemory = NewDecodeFile(SiiProfilePath, false);
 
                         if (FileDecoded)
                         {
@@ -1022,7 +1024,7 @@ namespace TS_SE_Tool
                 else if (tempProfileFileInMemory != null)
                 {
                     UpdateStatusBarMessage.ShowStatusMessage(SMStatus.Clear);
-                    SFProfileData.Prepare(tempProfileFileInMemory);
+                    MainSaveFileProfileData.Prepare(tempProfileFileInMemory);
                 }
             }
 
@@ -1038,11 +1040,12 @@ namespace TS_SE_Tool
         {
             toolStripProgressBarMain.Value = 0;
             //ClearFormControls(false);
-            PopulateFormControlsk();
 
             ToggleMainControlsAccess(true);
             buttonMainDecryptSave.Enabled = false;
             ToggleControlsAccess(true);
+
+            PopulateFormControlsk();
 
             LogWriter("Successfully completed work with " + SavefilePath + " save file");
         }
@@ -1120,6 +1123,7 @@ namespace TS_SE_Tool
                 PrepareGarages();
                 PrepareDriversTrucks();
                 PrepareVisitedCities();
+                PrepareUserColors();
                 PrintAddedJobs();
 
                 File.WriteAllText(SiiSavePath, tempSavefileInMemory[0] + "\r\n");
@@ -1157,14 +1161,14 @@ namespace TS_SE_Tool
                             //Experience points
                             if (SaveInMemLine.StartsWith(" experience_points"))
                             {
-                                writer.WriteLine(" experience_points: " + PlayerDataV.ExperiencePoints.ToString());
+                                writer.WriteLine(" experience_points: " + PlayerDataData.ExperiencePoints.ToString());
                                 continue;
                             }
 
                             //Skills
                             if (SaveInMemLine.StartsWith(" adr:"))
                             {
-                                char[] ADR = Convert.ToString(PlayerDataV.PlayerSkills[0], 2).PadLeft(6, '0').ToCharArray();
+                                char[] ADR = Convert.ToString(PlayerDataData.PlayerSkills[0], 2).PadLeft(6, '0').ToCharArray();
                                 Array.Reverse(ADR);
 
                                 writer.WriteLine(" adr: " + Convert.ToByte(new string(ADR), 2));
@@ -1172,54 +1176,61 @@ namespace TS_SE_Tool
                             }
                             if (SaveInMemLine.StartsWith(" long_dist:"))
                             {
-                                writer.WriteLine(" long_dist: " + PlayerDataV.PlayerSkills[1].ToString());
+                                writer.WriteLine(" long_dist: " + PlayerDataData.PlayerSkills[1].ToString());
                                 continue;
                             }
                             if (SaveInMemLine.StartsWith(" heavy:"))
                             {
-                                writer.WriteLine(" heavy: " + PlayerDataV.PlayerSkills[2].ToString());
+                                writer.WriteLine(" heavy: " + PlayerDataData.PlayerSkills[2].ToString());
                                 continue;
                             }
                             if (SaveInMemLine.StartsWith(" fragile:"))
                             {
-                                writer.WriteLine(" fragile: " + PlayerDataV.PlayerSkills[3].ToString());
+                                writer.WriteLine(" fragile: " + PlayerDataData.PlayerSkills[3].ToString());
                                 continue;
                             }
                             if (SaveInMemLine.StartsWith(" urgent:"))
                             {
-                                writer.WriteLine(" urgent: " + PlayerDataV.PlayerSkills[4].ToString());
+                                writer.WriteLine(" urgent: " + PlayerDataData.PlayerSkills[4].ToString());
                                 continue;
                             }
                             if (SaveInMemLine.StartsWith(" mechanical:"))
                             {
-                                writer.WriteLine(" mechanical: " + PlayerDataV.PlayerSkills[5].ToString());
+                                writer.WriteLine(" mechanical: " + PlayerDataData.PlayerSkills[5].ToString());
                                 continue;
                             }
 
                             //User Colors
-                            if (SaveInMemLine.StartsWith(" user_colors["))
+                            if (SaveInMemLine.StartsWith(" user_colors:"))
                             {
-                                string userColor;
-                                int userColorID = int.Parse(SaveInMemLine.Split(new char[] { '[', ']' })[1]);
+                                writer.WriteLine(" user_colors: " + UserColorsList.Count);
 
-                                if (UserColorsList[userColorID] == Color.FromArgb(0, 0, 0, 0))
-                                {
-                                    userColor = "0";
-                                }
-                                else if (UserColorsList[userColorID] == Color.FromArgb(255, 255, 255, 255))
-                                {
-                                    userColor = "nil";
-                                }
-                                else
-                                {
-                                    Byte[] bytes = new Byte[] { UserColorsList[userColorID].R, UserColorsList[userColorID].G, UserColorsList[userColorID].B, 255 };
-                                    uint temp = BitConverter.ToUInt32(bytes, 0);
+                                UInt16 ColorCount = Convert.ToUInt16(SaveInMemLine.Split(new string[] { ": " }, 0)[1]);
+                                line = line + ColorCount;
 
-                                    userColor = temp.ToString();
-                                }
+                                string userColor; ushort colorcounter = 0;
 
-                                writer.WriteLine(" user_colors[" + userColorID.ToString() + "]: " + userColor);
-                                //line++;
+                                foreach (Color usercolor in UserColorsList)
+                                {
+                                    if (usercolor == Color.FromArgb(0, 0, 0, 0))
+                                    {
+                                        userColor = "0";
+                                    }
+                                    else if (usercolor == Color.FromArgb(255, 255, 255, 255))
+                                    {
+                                        userColor = "nil";
+                                    }
+                                    else
+                                    {
+                                        Byte[] bytes = new Byte[] { usercolor.R, usercolor.G, usercolor.B, 255 };
+                                        uint temp = BitConverter.ToUInt32(bytes, 0);
+
+                                        userColor = temp.ToString();
+                                    }
+
+                                    writer.WriteLine(" user_colors[" + colorcounter + "]: " + userColor);
+                                    colorcounter++;
+                                }
                                 continue;
                             }
 
@@ -1331,7 +1342,7 @@ namespace TS_SE_Tool
                         //Account Money
                         if (tempSavefileInMemory[line].StartsWith(" money_account:"))
                         {
-                            writer.WriteLine(" money_account: " + PlayerDataV.AccountMoney.ToString());
+                            writer.WriteLine(" money_account: " + PlayerDataData.AccountMoney.ToString());
                             continue;
                         }
 
@@ -1352,7 +1363,7 @@ namespace TS_SE_Tool
                             //HQ city
                             if (SaveInMemLine.StartsWith(" hq_city:"))
                             {
-                                writer.WriteLine(" hq_city: " + PlayerDataV.HQcity);
+                                writer.WriteLine(" hq_city: " + PlayerDataData.HQcity);
                                 continue;
                             }
 
@@ -1360,11 +1371,11 @@ namespace TS_SE_Tool
                             {
                                 chunkOfline = SaveInMemLine.Split(new char[] { ' ' });
 
-                                if (PlayerDataV.UserCompanyAssignedTruck != chunkOfline[2])
+                                if (PlayerDataData.UserCompanyAssignedTruck != chunkOfline[2])
                                 {
-                                    writer.WriteLine(" assigned_truck: " + PlayerDataV.UserCompanyAssignedTruck);
+                                    writer.WriteLine(" assigned_truck: " + PlayerDataData.UserCompanyAssignedTruck);
                                     line++;
-                                    writer.WriteLine(" my_truck: " + PlayerDataV.UserCompanyAssignedTruck);
+                                    writer.WriteLine(" my_truck: " + PlayerDataData.UserCompanyAssignedTruck);
                                     //Garage driver switch needed
                                     int indexuser = 0, indextarget = 0, indexgarage = 0, indexgarageuser = 0, indexgaragetrg = 0;
 
@@ -1373,7 +1384,7 @@ namespace TS_SE_Tool
                                         int i = 0;
                                         foreach (string tempvehicle in tempgarage.Vehicles)
                                         {
-                                            if (tempvehicle == PlayerDataV.UserCompanyAssignedTruck)
+                                            if (tempvehicle == PlayerDataData.UserCompanyAssignedTruck)
                                             {
                                                 indextarget = i;
                                                 indexgaragetrg = indexgarage;
@@ -1385,7 +1396,7 @@ namespace TS_SE_Tool
                                         i = 0;
                                         foreach (string tempdriver in tempgarage.Drivers)
                                         {
-                                            if (tempdriver == PlayerDataV.UserDriver)
+                                            if (tempdriver == PlayerDataData.UserDriver)
                                             {
                                                 indexuser = i;
                                                 indexgarageuser = indexgarage;
@@ -1412,7 +1423,7 @@ namespace TS_SE_Tool
 
                             if (SaveInMemLine.StartsWith(" truck_placement:") && UserCompanyAssignedTruckPlacementEdited)
                             {
-                                writer.WriteLine(" truck_placement: " + PlayerDataV.UserCompanyAssignedTruckPlacement);
+                                writer.WriteLine(" truck_placement: " + PlayerDataData.UserCompanyAssignedTruckPlacement);
                                 line++;
                                 writer.WriteLine(" trailer_placement: (0, 0, 0) (1; 0, 0, 0)");
                                 line++;
@@ -2098,49 +2109,7 @@ namespace TS_SE_Tool
                 _inputWriter.WriteLine("");
             }
         }
-
-        public void WriteInfoFile(string[] _infoFile, string _filePath, SaveFileInfoData _infoData)
-        {
-            using (StreamWriter writer = new StreamWriter(_filePath, true))
-            {
-                string InMemLine = "";
-
-                for (int line = 0; line < _infoFile.Length; line++)
-                {
-                    InMemLine = _infoFile[line];
-
-                    if (InMemLine.StartsWith(" name:"))
-                    {
-                        if(_infoData.Name != null)
-                        {
-                            string t = _infoData.Name;
-
-                            if (_infoData.Name.Contains(" ") || _infoData.Name.Length == 0)
-                                t = "\"" + t + "\"";
-
-                            InMemLine = " name: " + t;
-                        }
-
-                        goto EndWrite;
-                    }
-
-                    if (InMemLine.StartsWith(" file_time:"))
-                    {
-                        if (_infoData.FileTime != 0)
-                        {
-                            InMemLine = " file_time: " + _infoData.FileTime.ToString();
-                        }
-
-                        goto EndWrite;
-                    }
-
-                    EndWrite:
-                    if(line > 0)
-                        writer.WriteLine();
-                    writer.Write(InMemLine);
-                }
-            }
-        }
+        
         //Database
         public void ExportDB()
         {

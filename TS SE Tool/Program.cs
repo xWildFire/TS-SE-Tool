@@ -42,9 +42,15 @@ namespace TS_SE_Tool
             // Add the event handler for handling non-UI thread exceptions to the event
             AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
 
+            FormMain.LogWriter("--- START ---");
+            FormMain.LogWriter(Utilities.AssemblyData.AssemblyProduct + " - " + Utilities.AssemblyData.AssemblyVersion);
+            DetectEnviroment.DetectOS();
+            DetectEnviroment.Get45PlusFromRegistry();
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new FormMain());
+            FormMain.LogWriter("--- END ---");
         }
 
         // Handle the UI exceptions by showing a dialog box, and asking the user whether

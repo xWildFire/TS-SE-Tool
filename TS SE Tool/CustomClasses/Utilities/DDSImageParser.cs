@@ -295,7 +295,8 @@ namespace S16.Drawing
                         format = PixelFormat.LUMINANCE;
                     }
                 }
-                else
+
+                if ((header.pixelformat.flags & DDPF_RGB) == DDPF_RGB)
                 {
                     if ((header.pixelformat.flags & DDPF_ALPHAPIXELS) == DDPF_ALPHAPIXELS)
                     {
@@ -305,6 +306,11 @@ namespace S16.Drawing
                     {
                         format = PixelFormat.RGB;
                     }
+                }
+
+                if ((header.pixelformat.flags & DDPF_ALPHA) == DDPF_ALPHA)
+                {
+                    format = PixelFormat.A8;
                 }
 
                 blocksize = (header.width * header.height * header.depth * (header.pixelformat.rgbbitcount >> 3));
@@ -324,6 +330,9 @@ namespace S16.Drawing
                 case PixelFormat.RGBA:
                 case PixelFormat.RGB:
                     return rgbbitcount / 8;
+
+                case PixelFormat.A8:
+                    return 4;
 
                 case PixelFormat.THREEDC:
                 case PixelFormat.RXGB:
@@ -618,9 +627,9 @@ namespace S16.Drawing
         #region Decompress Methods
         private byte[] DecompressData(DDSStruct header, byte[] data, PixelFormat pixelFormat)
         {
-            #if DEBUG
+#if DEBUG
             System.Diagnostics.Debug.WriteLine(pixelFormat);
-            #endif
+#endif
             // allocate bitmap
             byte[] rawData = null;
 
@@ -632,6 +641,10 @@ namespace S16.Drawing
 
                 case PixelFormat.RGB:
                     rawData = this.DecompressRGB(header, data, pixelFormat);
+                    break;
+
+                case PixelFormat.A8:
+                    rawData = this.DecompressA8(header, data, pixelFormat);
                     break;
 
                 case PixelFormat.LUMINANCE:
@@ -860,7 +873,7 @@ namespace S16.Drawing
                             for (int j = 0; j < 4; j++)
                             {
                                 //ushort word = (ushort)(alpha[2 * j] + 256 * alpha[2 * j + 1]);
-                                ushort word = (ushort)(alpha[2 * j] | (alpha[2 * j + 1] << 8)); 
+                                ushort word = (ushort)(alpha[2 * j] | (alpha[2 * j + 1] << 8));
                                 for (int i = 0; i < 4; i++)
                                 {
                                     if (((x + i) < width) && ((y + j) < height))
@@ -1047,7 +1060,7 @@ namespace S16.Drawing
             ComputeMaskParams(header.pixelformat.rbitmask, ref rShift1, ref rMul, ref rShift2);
             int gShift1 = 0; int gMul = 0; int gShift2 = 0;
             ComputeMaskParams(header.pixelformat.gbitmask, ref gShift1, ref gMul, ref gShift2);
-            int bShift1 = 0; int bMul = 0; int bShift2= 0;
+            int bShift1 = 0; int bMul = 0; int bShift2 = 0;
             ComputeMaskParams(header.pixelformat.bbitmask, ref bShift1, ref bMul, ref bShift2);
 
             int offset = 0;
@@ -1074,15 +1087,16 @@ namespace S16.Drawing
 
         private unsafe byte[] DecompressRGBA(DDSStruct header, byte[] data, PixelFormat pixelFormat)
         {
-            // allocate bitmap
-            int bpp = (int)(this.PixelFormatToBpp(pixelFormat, header.pixelformat.rgbbitcount));
-            int bps = (int)(header.width * bpp * this.PixelFormatToBpc(pixelFormat));
-            int sizeofplane = (int)(bps * header.height);
             int width = (int)header.width;
             int height = (int)header.height;
             int depth = (int)header.depth;
 
-            byte[] rawData = new byte[depth * sizeofplane + height * bps + width * bpp];
+            // allocate bitmap
+            int bpp = (int)(this.PixelFormatToBpp(pixelFormat, header.pixelformat.rgbbitcount));
+
+            int sizeofplane = (int)(width * height * bpp * this.PixelFormatToBpc(pixelFormat));
+
+            byte[] rawData = new byte[depth * sizeofplane];
 
             uint valMask = (uint)((header.pixelformat.rgbbitcount == 32) ? ~0 : (1 << (int)header.pixelformat.rgbbitcount) - 1);
             // Funny x86s, make 1 << 32 == 1
@@ -1114,6 +1128,38 @@ namespace S16.Drawing
                     rawData[offset + 2] = (byte)(((pxc >> bShift1) * bMul) >> bShift2);
                     pxc = px & header.pixelformat.alphabitmask;
                     rawData[offset + 3] = (byte)(((pxc >> aShift1) * aMul) >> aShift2);
+                    offset += 4;
+                }
+            }
+            return rawData;
+        }
+
+        private unsafe byte[] DecompressA8(DDSStruct header, byte[] data, PixelFormat pixelFormat)
+        {
+            // allocate bitmap
+            int width = (int)header.width;
+            int height = (int)header.height;
+            int depth = (int)header.depth;
+
+            int bpp = (int)(this.PixelFormatToBpp(pixelFormat, header.pixelformat.rgbbitcount));
+            int sizeofplane = (int)(width * height * bpp);
+
+            byte[] rawData = new byte[depth * sizeofplane];
+            int offset = 0;
+            int pixnum = width * height * depth;
+
+            fixed (byte* bytePtr = data)
+            {
+                byte* temp = bytePtr;
+
+                while (pixnum-- > 0)
+                {
+                    byte px = *temp;
+                    temp += 1;
+                    //rawData[offset + 0] = 0x00; //R
+                    //rawData[offset + 1] = 0x00; //G
+                    //rawData[offset + 2] = 0x00; //B
+                    rawData[offset + 3] = px;   //A
                     offset += 4;
                 }
             }
@@ -1347,8 +1393,8 @@ namespace S16.Drawing
 
             Colour565 color_0 = new Colour565();
             Colour565 color_1 = new Colour565();
-	        Colour8888[]	colours = new Colour8888[4];
-	        byte[] alphas = new byte[8];
+            Colour8888[] colours = new Colour8888[4];
+            byte[] alphas = new byte[8];
 
             fixed (byte* bytePtr = data)
             {
@@ -1592,10 +1638,10 @@ namespace S16.Drawing
                     //winxp (and xp is right to stop this code - I always
                     //wondered that it worked the old way at all)
                     if (sizeOfData - i < 4)
-                    { 
+                    {
                         //less than 4 byte to write?
                         if (tempBpp == 3)
-                        { 
+                        {
                             //this branch is extra-SLOOOW
                             readI = (uint)(*temp | ((*(temp + 1)) << 8) | ((*(temp + 2)) << 16));
                         }
@@ -1658,7 +1704,7 @@ namespace S16.Drawing
             int sizeOfData = (int)((header.width * header.pixelformat.rgbbitcount / 8) * header.height * header.depth);
             byte[] rawData = new byte[depth * sizeofplane + height * bps + width * bpp];
 
-            uint readI = 0, tempBpp  = 0;
+            uint readI = 0, tempBpp = 0;
             uint redL = 0, redR = 0;
             uint greenL = 0, greenR = 0;
             uint blueL = 0, blueR = 0;
@@ -1767,9 +1813,9 @@ namespace S16.Drawing
         /// <summary>
         /// Returns a System.Imaging.Bitmap containing the DDS image.
         /// </summary>
-        public System.Drawing.Bitmap BitmapImage 
-        { 
-            get { return this.m_bitmap; } 
+        public System.Drawing.Bitmap BitmapImage
+        {
+            get { return this.m_bitmap; }
         }
 
         /// <summary>
@@ -1884,6 +1930,7 @@ namespace S16.Drawing
 
         #region pixelformat values
         private const int DDPF_ALPHAPIXELS = 0x00000001;
+        private const int DDPF_ALPHA = 0x00000002;
         private const int DDPF_FOURCC = 0x00000004;
         private const int DDPF_RGB = 0x00000040;
         private const int DDPF_LUMINANCE = 0x00020000;
@@ -1975,6 +2022,10 @@ namespace S16.Drawing
             R32F,
             G32R32F,
             A32B32G32R32F,
+            /// <summary>
+            /// 8-bit image, with 8-bit black to transparent.
+            /// </summary>
+            A8,
             /// <summary>
             /// Unknown pixel format.
             /// </summary>

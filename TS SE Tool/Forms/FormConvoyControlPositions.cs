@@ -373,16 +373,20 @@ namespace TS_SE_Tool
                                 uint tDT = Utilities.DateTimeUtilities.DateTimeToUnixTimeStamp(DateTime.UtcNow.ToLocalTime());
 
                                 SaveFileInfoData infoData = new SaveFileInfoData();
+                                infoData.Prepare(infoSii);
                                 infoData.Name = entry.Value[0]; //Save name
-                                infoData.FileTime = tDT;        //Time
+                                infoData.FileTime = tDT;        //File time
 
                                 //Write info file
-                                MainForm.WriteInfoFile(infoSii, fp + "\\info.sii", infoData);
+                                using (StreamWriter writer = new StreamWriter(fp + "\\info.sii", false))
+                                {
+                                    infoData.WriteToStream(writer);
+                                }
 
                                 //Create thumbnail files
                                 //mat
                                 Encoding utf8WithoutBom = new UTF8Encoding(false);
-                                using (StreamWriter writer = new StreamWriter(fp + "\\preview.mat", true, utf8WithoutBom))
+                                using (StreamWriter writer = new StreamWriter(fp + "\\preview.mat", false, utf8WithoutBom))
                                 {
                                     writer.WriteLine(preview_mat);
                                 }
@@ -982,6 +986,11 @@ namespace TS_SE_Tool
 
             // Get the ListBox and the item.
             ListBox lst = sender as ListBox;
+
+            DataRowView SaveDR = (DataRowView)lst.Items[e.Index];
+            if (SaveDR.Row.RowState == DataRowState.Detached)
+                return;
+
             string txt = "";
 
             // Draw the background.
@@ -1001,8 +1010,6 @@ namespace TS_SE_Tool
             float height = (e.Bounds.Height - ItemMargin * 2) / 2;
 
             RectangleF layout_rect = new RectangleF(x, y, width, height);
-
-            DataRowView SaveDR = (DataRowView)lst.Items[e.Index];
 
             //Original name
             txt = SaveDR["saveName"].ToString();// + "\r\n" ;

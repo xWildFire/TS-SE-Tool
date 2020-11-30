@@ -13,14 +13,25 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
-
 using System;
 using System.Drawing;
+using System.Drawing.Imaging;
+using System.Drawing.Drawing2D;
+using System.Windows.Forms;
+using System.Linq;
+using System.IO;
+using System.Text;
+using System.Collections;
+using System.Collections.Generic;
+using System.Globalization;
 
 namespace TS_SE_Tool.Utilities
 {
+
     internal class TS_Graphics
     {
+        static FormMain MainForm = Application.OpenForms.OfType<FormMain>().Single();
+        
         internal static Icon IconFromImage(Image _inputImage)
         {
             return IconFromImage(_inputImage, 0);
@@ -49,6 +60,48 @@ namespace TS_SE_Tool.Utilities
             }
 
             return Icon.FromHandle(bmpCanvas.GetHicon());
+        }
+
+        public static Image ResizeImage(Image _inputImage, int _newWidth, int _newHeight)
+        {
+            Image newImage = new Bitmap(_newWidth, _newHeight);
+
+            using (var canvas = Graphics.FromImage(newImage))
+            {
+                canvas.InterpolationMode = InterpolationMode.Bicubic;
+                canvas.SmoothingMode = SmoothingMode.HighQuality;
+
+                var attributes = new ImageAttributes();
+                attributes.SetWrapMode(WrapMode.TileFlipXY);
+
+                var destination = new Rectangle(0, 0, _newWidth, _newHeight);
+
+                canvas.DrawImage(_inputImage, destination, 0, 0, _inputImage.Width, _inputImage.Height, GraphicsUnit.Pixel, attributes);
+                canvas.Save();
+            }
+
+            return newImage;
+        }
+
+        public static Image SimpleResizeImage(Image _inputImage, int _newWidth, int _newHeight)
+        {
+            Image newImage = new Bitmap(_inputImage, _newWidth, _newHeight);
+            return newImage;
+        }
+
+        private Image ReColorMonochrome(Image _inpulLetter, Color _newColor)
+        {
+            Bitmap tmp = new Bitmap(_inpulLetter);
+
+            for (int y = 0; y < _inpulLetter.Height; y++)
+            {
+                for (int x = 0; x < _inpulLetter.Width; x++)
+                {
+                    tmp.SetPixel(x, y, Color.FromArgb(tmp.GetPixel(x, y).A, _newColor.R, _newColor.G, _newColor.B));
+                }
+            }
+
+            return tmp;
         }
     }
 }

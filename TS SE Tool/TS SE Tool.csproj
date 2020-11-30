@@ -131,6 +131,11 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CustomClasses\ExternalData\ScsFont.cs" />
+    <Compile Include="CustomClasses\Save\Info\Dependencies.cs" />
+    <Compile Include="CustomClasses\Save\Items\PlayerJob.cs" />
+    <Compile Include="CustomClasses\SCSFontLetter.cs" />
+    <Compile Include="CustomClasses\SCSLicensePlate.cs" />
     <Compile Include="CustomClasses\Utilities\AssemblyData.cs" />
     <Compile Include="CustomClasses\Utilities\DateTimeUtilities.cs" />
     <Compile Include="CustomClasses\Utilities\Graphics.cs" />
@@ -138,6 +143,8 @@
     <Compile Include="CustomClasses\Utilities\NumericUtilities.cs" />
     <Compile Include="CustomClasses\Utilities\TextUtilities.cs" />
     <Compile Include="CustomClasses\Utilities\ZipDataUtilitiescs.cs" />
+    <Compile Include="CustomClasses\Utilities\dotNetCheck.cs" />
+    <Compile Include="CustomClasses\Utilities\FlexibleMessageBox.cs" />
     <Compile Include="Forms\ProfileEditor\FormProfileEditor.cs">
       <SubType>Form</SubType>
     </Compile>

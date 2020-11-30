@@ -60,7 +60,6 @@ namespace TS_SE_Tool
         private void SetupForm()
         {
             //
-
             switch (FormMode)
             {
                 case "rename":
@@ -88,6 +87,7 @@ namespace TS_SE_Tool
                         break;
                     }
             }
+
             //Group box and label width
             tableLayoutPanelControls.ColumnStyles[0].Width = 6 + ((labelNewName.PreferredWidth > groupBoxOptions.PreferredSize.Width) ? labelNewName.PreferredWidth : groupBoxOptions.PreferredSize.Width);
             
@@ -105,14 +105,16 @@ namespace TS_SE_Tool
             textBoxNewNameWidthMin = textBoxNewName.Width;
 
             FormWidthMin = this.Width;
+
+            indicateCharLimit();
         }
 
-        //Nmae textbox
+        //Name textbox events
         private void textBoxNewName_KeyDown(object sender, KeyEventArgs e)
         {
             if (textBoxNewName.Text.Length == 0) return;
 
-            if (e.KeyCode == Keys.Return || e.KeyCode == Keys.Back || e.KeyCode == Keys.Left || e.KeyCode == Keys.Right || e.KeyCode == Keys.Home || e.KeyCode == Keys.End || e.KeyCode == Keys.Delete)
+            if (e.KeyCode == Keys.Return || e.KeyCode == Keys.Back || e.KeyCode == Keys.Left || e.KeyCode == Keys.Right || e.KeyCode == Keys.Up || e.KeyCode == Keys.Down || e.KeyCode == Keys.Home || e.KeyCode == Keys.End || e.KeyCode == Keys.PageDown || e.KeyCode == Keys.PageUp || e.KeyCode == Keys.Delete)
             {
                 e.Handled = false;
                 aboveLimitLength = false;
@@ -131,8 +133,24 @@ namespace TS_SE_Tool
             aboveLimitLength = (temp.Length < NameLengthLimit) ? false : true;
         }
 
+        private void textBoxNewName_KeyUp(object sender, KeyEventArgs e)
+        {
+            indicateCharLimit();
+        }
+
         private void textBoxNewName_KeyPress(object sender, KeyPressEventArgs e)
         {
+            //Filter
+            char[] forbidenChars = { '\\', '|' };
+
+            char tmpChar = e.KeyChar;
+            if (forbidenChars.Contains(tmpChar))
+            {
+                e.Handled = true;
+            }
+
+            //charLimit();
+
             // Check for the flag being set in the KeyDown event
             if (aboveLimitLength == true)
             {
@@ -143,65 +161,35 @@ namespace TS_SE_Tool
 
         private void textBoxNewName_TextChanged(object sender, EventArgs e)
         {
-            int extraM = textBoxNewName.Font.Height * 2;
-
+            //Trim on paste
             if (textBoxNewName.Multiline)
             {
+                int linecount = textBoxNewName.Lines.Length;
 
-                int tNewheight = textBoxNewName.Font.Height * (textBoxNewName.Lines.Count() + 1) + 7;
-                int tminHeight = textBoxNewName.Font.Height * 3 + 7;
+                var tmpLines = textBoxNewName.Lines;
 
-                if (tminHeight < tNewheight)
-                    textBoxNewName.Height = tNewheight;
-                else
-                    textBoxNewName.Height = tminHeight;
-
-                textBoxNewName.ScrollToCaret();
-
-                //Search for longest line
-                Graphics gr = CreateGraphics();
-
-                tbNewNameWidthMulty = 0;
-
-                foreach (string newfile in textBoxNewName.Lines)
+                for (int i = 0; i < linecount; i++)
                 {
-                    if (newfile.Length == 0 || newfile.Trim(new char[] { ' ' }) == "")
-                        continue;
+                    if(textBoxNewName.Lines[i].Length > NameLengthLimit)
+                    {
+                        tmpLines[i] = textBoxNewName.Lines[i].Substring(0, NameLengthLimit);
+                    }
 
-                    SizeF tSize = gr.MeasureString(newfile, textBoxNewName.Font);
-
-                    int tWidth = (int)Math.Ceiling(Convert.ToDouble(tSize.Width));
-
-                    if (tWidth > tbNewNameWidthMulty)
-                        tbNewNameWidthMulty = tWidth;
+                    textBoxNewName.Lines = tmpLines;
                 }
-
-                if (tbNewNameWidthMulty + extraM >= textBoxNewNameWidthMin)
-                    this.Width = FormWidthMin + tbNewNameWidthMulty - textBoxNewNameWidthMin + extraM + SystemInformation.VerticalScrollBarWidth;
-                else
-                    this.Width = FormWidthMin + SystemInformation.VerticalScrollBarWidth;
-
-                textBoxNewName.Width = tableLayoutPanelControls.GetColumnWidths()[1];
             }
             else
             {
-                tableLayoutPanelControls.SetRowSpan(textBoxNewName, 1);
-
-                //
-                Graphics gr = CreateGraphics();
-                SizeF tSize = gr.MeasureString(textBoxNewName.Text, textBoxNewName.Font);
-                tbNewNameWidth = (int)Math.Ceiling(Convert.ToDouble(tSize.Width));
-
-
-                if (tbNewNameWidth + extraM >= textBoxNewNameWidthMin)
-                    this.Width = FormWidthMin + tbNewNameWidth - textBoxNewNameWidthMin + extraM;
-                else
-                    this.Width = FormWidthMin;
-
-                textBoxNewName.Width = tableLayoutPanelControls.GetColumnWidths()[1];
+                if (textBoxNewName.Text.Length > NameLengthLimit)
+                    textBoxNewName.Text = textBoxNewName.Text.Substring(0, NameLengthLimit);
             }
+
+            //
+            calculateTextBoxNewNameSize();
+
+            indicateCharLimit();
         }
-        
+
         //Checkboxes
         private void checkBoxMutiCloning_CheckedChanged(object sender, EventArgs e)
         {
@@ -226,19 +214,21 @@ namespace TS_SE_Tool
                 textBoxNewName.ScrollBars = ScrollBars.None;
                 textBoxNewName.Text = (textBoxNewName.Lines.Count() != 0) ? textBoxNewName.Lines[0] : "";
             }
+
+            calculateTextBoxNewNameSize();
         }
         
         //Buttons
         private void buttonAccept_Click(object sender, EventArgs e)
         {
-            ReturnNewName = textBoxNewName.Text;
-
             switch (FormMode)
             {
                 case "rename":
                     {
-                        string NewProfileName = NewProfileName = textBoxNewName.Text.Trim(new char[] { ' ' }) , NewFolderName = "", NewFolderPath = "";
+                        string NewProfileName = textBoxNewName.Text.Trim(new char[] { ' ' }) , NewFolderName = "", NewFolderPath = "";
                         byte progress = 0;
+
+                        ReturnNewName = NewProfileName;
 
                         //Get existing folders
                         string[] existingDirs = Directory.GetDirectories(InitialPath.Remove(InitialPath.LastIndexOf('\\') + 1));
@@ -277,7 +267,7 @@ namespace TS_SE_Tool
                                 progress = 5;
 
                                 //New name
-                                ProfileData.ProfileName = textBoxNewName.Text;
+                                ProfileData.ProfileName = NewProfileName;
                                 progress = 6;
 
                                 //Write file
@@ -502,5 +492,95 @@ namespace TS_SE_Tool
         {
             this.Close();
         }
+        
+        //Extra
+        private void indicateCharLimit()
+        {
+            int txtLength = 0;
+
+            if (textBoxNewName.Multiline)
+            {
+                if (textBoxNewName.Lines.Length > 0)
+                {
+                    int currentLine = textBoxNewName.GetLineFromCharIndex(textBoxNewName.SelectionStart);
+                    txtLength = textBoxNewName.Lines[currentLine].Length;
+                }
+            }
+            else
+            {
+                txtLength = textBoxNewName.Text.Length;
+            }
+            //
+            if (txtLength == 0)
+            {
+                labelCharCountLimit.ForeColor = Color.Red;
+                labelCharCountLimit.Font = new Font(labelCharCountLimit.Font, FontStyle.Bold);
+            }
+            else if (txtLength >= NameLengthLimit)
+            {
+                labelCharCountLimit.ForeColor = Color.Red;
+                labelCharCountLimit.Font = new Font(labelCharCountLimit.Font, FontStyle.Bold);
+            }
+            else
+            {
+                labelCharCountLimit.ForeColor = Color.DarkGreen;
+                labelCharCountLimit.Font = new Font(labelCharCountLimit.Font, FontStyle.Regular);
+            }
+
+            labelCharCountLimit.Text = "[" + txtLength.ToString() + " | " + NameLengthLimit.ToString() + "]";
+        }
+
+        private void calculateTextBoxNewNameSize()
+        {
+            int extraM = 25;
+
+            if (textBoxNewName.Multiline)
+            {
+                int tNewheight = textBoxNewName.Font.Height * (textBoxNewName.Lines.Count() + 1) + 7;
+                int tminHeight = textBoxNewName.Font.Height * 3 + 7;
+
+                if (tminHeight < tNewheight)
+                    textBoxNewName.Height = tNewheight;
+                else
+                    textBoxNewName.Height = tminHeight;
+
+                textBoxNewName.ScrollToCaret();
+
+                //Search for longest line
+                Graphics gr = CreateGraphics();
+
+                tbNewNameWidthMulty = 0;
+
+                foreach (string newfile in textBoxNewName.Lines)
+                {
+                    if (newfile.Length == 0 || newfile.Trim(new char[] { ' ' }) == "")
+                        continue;
+
+                    SizeF tSize = gr.MeasureString(newfile, textBoxNewName.Font);
+                    int tWidth = (int)Math.Ceiling(Convert.ToDouble(tSize.Width));
+
+                    if (tWidth > tbNewNameWidthMulty)
+                        tbNewNameWidthMulty = tWidth;
+                }
+
+                if (tbNewNameWidthMulty + extraM >= textBoxNewNameWidthMin)
+                    this.Width = FormWidthMin + tbNewNameWidthMulty - textBoxNewNameWidthMin + extraM + SystemInformation.VerticalScrollBarWidth;
+                else
+                    this.Width = FormWidthMin + SystemInformation.VerticalScrollBarWidth;
+            }
+            else
+            {
+                Graphics gr = CreateGraphics();
+                SizeF tSize = gr.MeasureString(textBoxNewName.Text, textBoxNewName.Font);
+                tbNewNameWidth = (int)Math.Ceiling(Convert.ToDouble(tSize.Width));
+
+                if (tbNewNameWidth + extraM >= textBoxNewNameWidthMin)
+                    this.Width = FormWidthMin + tbNewNameWidth - textBoxNewNameWidthMin + extraM;
+                else
+                    this.Width = FormWidthMin;
+            }
+
+        }
+
     }
 }
