@@ -126,10 +126,10 @@ namespace TS_SE_Tool
 
                 ProgSettingsV.ProgramVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
-                SupportedSavefileVersionETS2 = new int[] { 39, 49 }; //Supported save version
-                SupportedGameVersionETS2 = "1.33.x - 1.38.x"; //Last game version Tested on
+                SupportedSavefileVersionETS2 = new int[] { 39, 51 }; //Supported save version
+                SupportedGameVersionETS2 = "1.33.x - 1.39.x"; //Last game version Tested on
                 //SupportedSavefileVersionATS;
-                SupportedGameVersionATS = "1.33.x - 1.38.x"; //Last game version Tested on
+                SupportedGameVersionATS = "1.33.x - 1.39.x"; //Last game version Tested on
 
                 comboBoxPrevProfiles.FlatStyle =
                 comboBoxProfiles.FlatStyle =
@@ -632,6 +632,35 @@ namespace TS_SE_Tool
             }
 
         }
+
+        private string[] HelpTranslateDialog(string _dialogName)
+        {
+            char[] charsToTrim = { '1', '2', '3', '4', '5', '6', '7', '8', '9', '0' };
+            string dialogCaption = "", dialogText = "";
+
+            try
+            {
+                string translatedString = ResourceManagerMain.GetString("dialogCaption" + _dialogName, Thread.CurrentThread.CurrentUICulture);
+
+                if (translatedString == null)
+                    translatedString = ResourceManagerMain.GetString("dialogCaption" + _dialogName.TrimEnd(charsToTrim), Thread.CurrentThread.CurrentUICulture);
+
+                if (translatedString != null)
+                    dialogCaption = translatedString;
+
+                translatedString = ResourceManagerMain.GetString("dialogText" + _dialogName, Thread.CurrentThread.CurrentUICulture);
+
+                if (translatedString == null)
+                    translatedString = ResourceManagerMain.GetString("dialogText" + _dialogName.TrimEnd(charsToTrim), Thread.CurrentThread.CurrentUICulture);
+
+                if (translatedString != null)
+                    dialogText = translatedString;
+            }
+            catch { }
+
+            return new string[] { dialogCaption, dialogText };
+        }
+
         //Correct positions
         private void CorrectControlsPositions()
         {
